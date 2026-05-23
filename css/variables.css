@@ -1,0 +1,117 @@
+/* CSS Design System Tokens */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=SF+Pro+Display:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* HSL Modern Harmony Palette (Light Mode) */
+  --bg-app: hsl(220, 20%, 97%);
+  --bg-panel: hsla(0, 0%, 100%, 0.7);
+  --bg-panel-hover: hsla(0, 0%, 100%, 0.85);
+  --bg-sidebar-mobile: hsl(0, 0%, 100%);
+  
+  --text-primary: hsl(222, 47%, 11%);
+  --text-secondary: hsl(215, 16%, 47%);
+  --text-tertiary: hsl(215, 16%, 65%);
+  
+  --border-color: rgba(0, 0, 0, 0.08);
+  --border-hover: rgba(0, 0, 0, 0.15);
+  
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.12);
+  
+  /* Color Tags */
+  --color-blue: hsl(217, 91%, 60%);
+  --color-blue-bg: hsla(217, 91%, 60%, 0.15);
+  --color-emerald: hsl(142, 70%, 45%);
+  --color-emerald-bg: hsla(142, 70%, 45%, 0.15);
+  --color-rose: hsl(346, 84%, 61%);
+  --color-rose-bg: hsla(346, 84%, 61%, 0.15);
+  --color-amber: hsl(38, 92%, 50%);
+  --color-amber-bg: hsla(38, 92%, 50%, 0.15);
+  --color-purple: hsl(262, 83%, 62%);
+  --color-purple-bg: hsla(262, 83%, 62%, 0.15);
+
+  /* Typography */
+  --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Outfit", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  
+  /* UI Rounding */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  
+  /* Transitions */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Safe Area placeholders (Overridden by environment values where supported) */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+/* System Dark Mode Override (Active by default if preferred, unless light-theme is manually selected) */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light-theme) {
+    --bg-app: hsl(222, 25%, 8%);
+    --bg-panel: hsla(222, 20%, 15%, 0.65);
+    --bg-panel-hover: hsla(222, 20%, 18%, 0.8);
+    --bg-sidebar-mobile: hsl(222, 25%, 12%);
+    
+    --text-primary: hsl(210, 40%, 98%);
+    --text-secondary: hsl(215, 20%, 65%);
+    --text-tertiary: hsl(215, 15%, 45%);
+    
+    --border-color: rgba(255, 255, 255, 0.08);
+    --border-hover: rgba(255, 255, 255, 0.15);
+    
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.45);
+    
+    /* Darker HSL Tag Adjustments for Legibility */
+    --color-blue: hsl(217, 91%, 65%);
+    --color-blue-bg: hsla(217, 91%, 65%, 0.2);
+    --color-emerald: hsl(142, 70%, 50%);
+    --color-emerald-bg: hsla(142, 70%, 50%, 0.2);
+    --color-rose: hsl(346, 84%, 65%);
+    --color-rose-bg: hsla(346, 84%, 65%, 0.2);
+    --color-amber: hsl(38, 92%, 55%);
+    --color-amber-bg: hsla(38, 92%, 55%, 0.2);
+    --color-purple: hsl(262, 83%, 68%);
+    --color-purple-bg: hsla(262, 83%, 68%, 0.2);
+  }
+}
+
+/* Force Dark Theme Class (Manual Toggle override) */
+:root.dark-theme {
+  --bg-app: hsl(222, 25%, 8%);
+  --bg-panel: hsla(222, 20%, 15%, 0.65);
+  --bg-panel-hover: hsla(222, 20%, 18%, 0.8);
+  --bg-sidebar-mobile: hsl(222, 25%, 12%);
+  
+  --text-primary: hsl(210, 40%, 98%);
+  --text-secondary: hsl(215, 20%, 65%);
+  --text-tertiary: hsl(215, 15%, 45%);
+  
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.15);
+  
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.45);
+  
+  /* Darker HSL Tag Adjustments for Legibility */
+  --color-blue: hsl(217, 91%, 65%);
+  --color-blue-bg: hsla(217, 91%, 65%, 0.2);
+  --color-emerald: hsl(142, 70%, 50%);
+  --color-emerald-bg: hsla(142, 70%, 50%, 0.2);
+  --color-rose: hsl(346, 84%, 65%);
+  --color-rose-bg: hsla(346, 84%, 65%, 0.2);
+  --color-amber: hsl(38, 92%, 55%);
+  --color-amber-bg: hsla(38, 92%, 55%, 0.2);
+  --color-purple: hsl(262, 83%, 68%);
+  --color-purple-bg: hsla(262, 83%, 68%, 0.2);
+}

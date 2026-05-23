@@ -1,0 +1,310 @@
+/* Calendar Grid Layouts for Month, Week, and Day Views */
+
+/* ==========================================================================
+   Month View Styling
+   ========================================================================== */
+.month-view-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  flex: 1;
+}
+
+.month-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-bottom: 1px solid var(--border-color);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.month-weekday {
+  text-align: center;
+  padding: 10px 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(6, 1fr);
+  flex: 1;
+  background-color: var(--border-color);
+  gap: 1px; /* Creates clean thin grid lines */
+}
+
+.month-cell {
+  background-color: var(--bg-panel);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+  transition: background-color var(--transition-fast);
+}
+
+.month-cell:hover {
+  background-color: var(--bg-panel-hover);
+}
+
+.month-cell.other-month {
+  opacity: 0.5;
+  background-color: rgba(0, 0, 0, 0.01);
+}
+
+.month-day-num {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  align-self: flex-end;
+}
+
+.month-cell.today .month-day-num {
+  background-color: var(--color-blue);
+  color: white;
+  font-weight: 700;
+}
+
+.month-events-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow-y: auto;
+  scrollbar-width: none; /* Hide scrollbars */
+}
+
+.month-events-wrapper::-webkit-scrollbar {
+  display: none;
+}
+
+/* Event Pill Style */
+.event-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: transform var(--transition-fast);
+}
+
+.event-pill:active {
+  transform: scale(0.97);
+}
+
+/* Color Categories Mapping */
+.event-pill.blue { background-color: var(--color-blue-bg); color: var(--color-blue); border-left-color: var(--color-blue); }
+.event-pill.emerald { background-color: var(--color-emerald-bg); color: var(--color-emerald); border-left-color: var(--color-emerald); }
+.event-pill.rose { background-color: var(--color-rose-bg); color: var(--color-rose); border-left-color: var(--color-rose); }
+.event-pill.amber { background-color: var(--color-amber-bg); color: var(--color-amber); border-left-color: var(--color-amber); }
+.event-pill.purple { background-color: var(--color-purple-bg); color: var(--color-purple); border-left-color: var(--color-purple); }
+
+
+/* ==========================================================================
+   Week & Day Views Styling (Scrollable Timeline Layout)
+   ========================================================================== */
+.timeline-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Grid representing hours on the left + days on the right */
+.timeline-grid {
+  display: grid;
+  position: relative;
+  background-color: var(--bg-panel);
+}
+
+.week-grid-layout {
+  grid-template-columns: 60px repeat(7, 1fr); /* 60px hours bar + 7 equal days */
+}
+
+.day-grid-layout {
+  grid-template-columns: 60px 1fr; /* 60px hours bar + 1 day column */
+}
+
+/* Left side hour indicators column */
+.hours-column {
+  border-right: 1px solid var(--border-color);
+  background: rgba(0, 0, 0, 0.01);
+}
+
+.hour-cell {
+  height: 60px; /* Precise height. DO NOT CHANGE - JS positioning calculation depends on this */
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding-right: 8px;
+  padding-top: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.02);
+}
+
+/* Column headers for Week/Day view (stays sticky at top) */
+.timeline-header {
+  display: grid;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-panel);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 4;
+}
+
+.timeline-header-cell {
+  text-align: center;
+  padding: 12px 4px;
+  font-size: 12px;
+  border-right: 1px solid var(--border-color);
+}
+
+.timeline-header-dayname {
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+
+.timeline-header-daynum {
+  font-size: 18px;
+  font-weight: 600;
+  width: 28px;
+  height: 28px;
+  margin: 4px auto 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--text-primary);
+}
+
+.timeline-header-cell.today .timeline-header-daynum {
+  background: var(--color-blue);
+  color: white;
+  font-weight: 700;
+}
+
+/* Grid columns background for week days */
+.day-columns-container {
+  display: grid;
+  position: absolute;
+  top: 0;
+  left: 60px;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.week-columns-grid {
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.day-columns-grid {
+  grid-template-columns: 1fr;
+}
+
+.day-column-bg {
+  border-right: 1px solid var(--border-color);
+  height: 100%;
+  position: relative;
+  background-image: linear-gradient(rgba(0,0,0,0.02) 1px, transparent 1px);
+  background-size: 100% 60px; /* Matching the hour row height */
+}
+
+/* Absolute Event Cards Positioning Layer */
+.events-positioning-layer {
+  position: absolute;
+  top: 0;
+  left: 60px;
+  right: 0;
+  bottom: 0;
+}
+
+/* Premium Event Cards on Timeline */
+.event-card {
+  position: absolute;
+  pointer-events: auto; /* Allow interactions */
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  border-left: 4px solid transparent;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.event-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+  z-index: 10;
+}
+
+.event-card:active {
+  transform: scale(0.98);
+}
+
+.event-card-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.event-card-time {
+  font-size: 10px;
+  opacity: 0.8;
+  font-weight: 500;
+}
+
+/* Color Categories Mapping for Cards */
+.event-card.blue { background-color: var(--color-blue-bg); border-left-color: var(--color-blue); }
+.event-card.emerald { background-color: var(--color-emerald-bg); border-left-color: var(--color-emerald); }
+.event-card.rose { background-color: var(--color-rose-bg); border-left-color: var(--color-rose); }
+.event-card.amber { background-color: var(--color-amber-bg); border-left-color: var(--color-amber); }
+.event-card.purple { background-color: var(--color-purple-bg); border-left-color: var(--color-purple); }
+
+/* Current Time Indicator Line for Day/Week View */
+.current-time-indicator {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--color-rose);
+  z-index: 3;
+  pointer-events: none;
+}
+
+.current-time-indicator::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--color-rose);
+  box-shadow: 0 0 6px var(--color-rose);
+}
