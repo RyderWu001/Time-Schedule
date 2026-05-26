@@ -75,6 +75,7 @@ const App = {
     // Collapsible Sidebar Toggles
     this.toggleFilters = document.getElementById('toggle-filters');
     this.toggleAgenda = document.getElementById('toggle-agenda');
+    this.toggleNewsBriefing = document.getElementById('toggle-news-briefing');
     
     // AI Pending Tasks Elements
     this.togglePendingPool = document.getElementById('toggle-pending-pool');
@@ -267,6 +268,11 @@ const App = {
     if (this.togglePendingPool) {
       this.togglePendingPool.addEventListener('click', () => {
         this.togglePendingPool.classList.toggle('collapsed');
+      });
+    }
+    if (this.toggleNewsBriefing) {
+      this.toggleNewsBriefing.addEventListener('click', () => {
+        this.toggleNewsBriefing.classList.toggle('collapsed');
       });
     }
 

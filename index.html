@@ -152,6 +152,22 @@
         </div>
       </div>
 
+      <!-- Today's News Briefing Widget -->
+      <div class="news-briefing" style="margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+        <div class="sidebar-header-toggle" id="toggle-news-briefing">
+          <span class="filter-title">📰 今日焦點時事</span>
+          <svg class="chevron-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+        
+        <div class="collapsible-body" id="news-briefing-body" style="margin-top: 8px; display: flex; flex-direction: column; gap: 8px;">
+          <div id="news-briefing-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 150px; overflow-y: auto; padding-right: 4px;">
+            <div class="upcoming-empty" style="padding: 12px 0;">正在獲取今日時事新聞...</div>
+          </div>
+        </div>
+      </div>
+
       <!-- AI Pending Tasks Pool (Procrastination-Killer) -->
       <div class="pending-pool" style="margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 16px;">
         <div class="sidebar-header-toggle" id="toggle-pending-pool">
@@ -381,18 +397,42 @@
       <form id="settings-form" autocomplete="off">
         <div class="modal-body">
           <div class="form-group">
-            <label class="form-label" for="setting-api-key">OpenAI API Key</label>
-            <input class="form-input" type="password" id="setting-api-key" name="apiKey" placeholder="sk-..." required style="-webkit-text-security: disc;">
+            <label class="form-label" for="setting-provider">模型供應商 (Provider)</label>
+            <select class="form-input" id="setting-provider" name="provider" style="width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: rgba(0, 0, 0, 0.02); color: var(--text-primary); outline: none; font-family: inherit; cursor: pointer;">
+              <option value="openai">OpenAI</option>
+              <option value="openrouter">OpenRouter (推薦多種模型)</option>
+              <option value="custom">自定義 (Custom Endpoint)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="setting-api-key">API 金鑰 (API Key) *</label>
+            <input class="form-input" type="password" id="setting-api-key" name="apiKey" placeholder="請輸入您的 API Key (例如 sk-...)" required style="-webkit-text-security: disc;">
             <p style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.4;">
               此金鑰僅會保存在您本地瀏覽器的 LocalStorage 中，絕不上傳到任何第三方伺服器，請放心使用。
             </p>
           </div>
           
           <div class="form-group">
-            <label class="form-label" for="setting-api-base">API Proxy Base URL (API 代理網址)</label>
+            <label class="form-label" for="setting-api-base">API 代理/基底網址 (API Base URL)</label>
             <input class="form-input" type="text" id="setting-api-base" name="apiBase" placeholder="https://api.openai.com/v1" value="https://api.openai.com/v1">
             <p style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.4;">
-              若您在特定網絡環境下無法直接連接 OpenAI，可填寫自訂的 API 代理或中轉網址。
+              切換供應商時將自動填入對應的預設網址，您也可以在此自定義您的 API 中轉網址。
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="setting-model-select">選擇模型 (AI Model)</label>
+            <select class="form-input" id="setting-model-select" name="modelSelect" style="width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: rgba(0, 0, 0, 0.02); color: var(--text-primary); outline: none; font-family: inherit; cursor: pointer;">
+              <!-- 由 JS 動態載入模型選項 -->
+            </select>
+          </div>
+
+          <div class="form-group" id="custom-model-group" style="display: none;">
+            <label class="form-label" for="setting-custom-model">自定義模型標示 (Custom Model ID)</label>
+            <input class="form-input" type="text" id="setting-custom-model" name="customModel" placeholder="例如 google/gemini-2.5-flash">
+            <p style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.4;">
+              請輸入所要呼叫的模型識別碼。注意：<strong>請確保所選模型支援回傳 JSON 格式 (JSON Mode)。</strong>
             </p>
           </div>
 

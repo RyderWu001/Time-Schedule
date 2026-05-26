@@ -19,8 +19,10 @@ export const Store = {
       proposedEvents: []
     },
     openaiConfig: {
+      provider: 'openai',
       apiKey: '',
       apiBase: 'https://api.openai.com/v1',
+      apiModel: 'gpt-3.5-turbo',
       systemPrompt: ''
     }
   },
@@ -142,12 +144,21 @@ export const Store = {
       this.save();
     }
 
-    // 3. Load OpenAI configurations
+    // 3. Load OpenAI configurations with backward compatibility
     const rawConfig = localStorage.getItem('time_schedule_openai_config');
     if (rawConfig) {
       try {
-        this.state.openaiConfig = JSON.parse(rawConfig);
-      } catch (e) {}
+        const parsed = JSON.parse(rawConfig);
+        this.state.openaiConfig = {
+          provider: parsed.provider || 'openai',
+          apiKey: parsed.apiKey || '',
+          apiBase: parsed.apiBase || 'https://api.openai.com/v1',
+          apiModel: parsed.apiModel || 'gpt-3.5-turbo',
+          systemPrompt: parsed.systemPrompt || ''
+        };
+      } catch (e) {
+        console.error('Failed to parse openaiConfig, using defaults', e);
+      }
     }
   },
 

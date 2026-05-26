@@ -16,10 +16,40 @@ export const AIController = {
   ],
   tipInterval: null,
 
+  presets: {
+    openai: {
+      defaultBase: 'https://api.openai.com/v1',
+      models: [
+        { value: 'gpt-3.5-turbo', text: 'gpt-3.5-turbo (速度快、省點數)' },
+        { value: 'gpt-4o-mini', text: 'gpt-4o-mini (推薦、高性價比)' },
+        { value: 'gpt-4o', text: 'gpt-4o (精準、適合複雜規劃)' },
+        { value: 'custom', text: '✍️ 自定義模型...' }
+      ]
+    },
+    openrouter: {
+      defaultBase: 'https://openrouter.ai/api/v1',
+      models: [
+        { value: 'google/gemini-2.5-flash', text: 'Gemini 2.5 Flash (推薦、超快速)' },
+        { value: 'meta-llama/llama-3-8b-instruct:free', text: 'Llama 3 8B Free (免費)' },
+        { value: 'qwen/qwen-2.5-72b-instruct', text: 'Qwen 2.5 72B (中文理解極佳)' },
+        { value: 'anthropic/claude-3.5-sonnet', text: 'Claude 3.5 Sonnet (邏輯最強)' },
+        { value: 'custom', text: '✍️ 自定義模型...' }
+      ]
+    },
+    custom: {
+      defaultBase: '',
+      models: [
+        { value: 'custom', text: '✍️ 自定義模型...' }
+      ]
+    }
+  },
+
   init(appMain) {
     this.app = appMain;
+    this.todayNews = [];
     this.cacheDOM();
     this.bindEvents();
+    this.fetchTodayNews(); // Automatically fetch news on startup
   },
 
   cacheDOM() {
@@ -35,6 +65,15 @@ export const AIController = {
     this.btnSettings = document.getElementById('btn-settings');
     this.settingsModal = document.getElementById('settings-modal');
     this.settingsForm = document.getElementById('settings-form');
+    
+    // Provider & Model elements
+    this.settingProvider = document.getElementById('setting-provider');
+    this.settingModelSelect = document.getElementById('setting-model-select');
+    this.customModelGroup = document.getElementById('custom-model-group');
+    this.settingCustomModel = document.getElementById('setting-custom-model');
+
+    // News Briefing List
+    this.newsBriefingList = document.getElementById('news-briefing-list');
   },
 
   bindEvents() {
@@ -59,13 +98,79 @@ export const AIController = {
       e.preventDefault();
       this.saveSettings();
     });
+
+    // 6. Settings provider & model select handlers
+    this.settingProvider.addEventListener('change', () => this.handleProviderChange());
+    this.settingModelSelect.addEventListener('change', () => this.handleModelSelectChange());
+  },
+
+  handleProviderChange(preselectedModel = null) {
+    const provider = this.settingProvider.value;
+    const preset = this.presets[provider];
+    
+    if (preset) {
+      // 1. Prefill default base URL if empty or matching standard defaults
+      const currentBase = this.settingsForm.elements['apiBase'].value.trim();
+      const allBases = Object.values(this.presets).map(p => p.defaultBase);
+      if (!currentBase || allBases.includes(currentBase) || provider !== 'custom') {
+        this.settingsForm.elements['apiBase'].value = preset.defaultBase;
+      }
+      
+      // 2. Populate models dropdown
+      this.settingModelSelect.innerHTML = '';
+      preset.models.forEach(model => {
+        const opt = document.createElement('option');
+        opt.value = model.value;
+        opt.textContent = model.text;
+        this.settingModelSelect.appendChild(opt);
+      });
+      
+      // 3. Set selected model
+      if (preselectedModel) {
+        const hasModel = preset.models.some(m => m.value === preselectedModel);
+        if (hasModel) {
+          this.settingModelSelect.value = preselectedModel;
+        } else {
+          this.settingModelSelect.value = 'custom';
+          this.settingCustomModel.value = preselectedModel;
+        }
+      } else {
+        this.settingModelSelect.value = preset.models[0].value;
+      }
+    }
+    
+    this.handleModelSelectChange();
+  },
+
+  handleModelSelectChange() {
+    const isCustom = this.settingModelSelect.value === 'custom' || this.settingProvider.value === 'custom';
+    if (isCustom) {
+      this.customModelGroup.style.display = 'flex';
+      if (this.settingProvider.value !== 'custom') {
+        if (!this.settingCustomModel.value) {
+          this.settingCustomModel.focus();
+        }
+      }
+    } else {
+      this.customModelGroup.style.display = 'none';
+      this.settingCustomModel.value = '';
+    }
   },
 
   openSettings() {
     this.settingsModal.classList.add('active');
-    this.settingsForm.elements['apiKey'].value = Store.state.openaiConfig.apiKey || '';
-    this.settingsForm.elements['apiBase'].value = Store.state.openaiConfig.apiBase || 'https://api.openai.com/v1';
-    this.settingsForm.elements['systemPrompt'].value = Store.state.openaiConfig.systemPrompt || '';
+    
+    const config = Store.state.openaiConfig;
+    const provider = config.provider || 'openai';
+    const apiModel = config.apiModel || 'gpt-3.5-turbo';
+    
+    this.settingProvider.value = provider;
+    this.settingsForm.elements['apiKey'].value = config.apiKey || '';
+    this.settingsForm.elements['apiBase'].value = config.apiBase || 'https://api.openai.com/v1';
+    
+    this.handleProviderChange(apiModel);
+    
+    this.settingsForm.elements['systemPrompt'].value = config.systemPrompt || '';
   },
 
   closeSettings() {
@@ -73,17 +178,30 @@ export const AIController = {
   },
 
   saveSettings() {
+    const provider = this.settingProvider.value;
     const keyVal = this.settingsForm.elements['apiKey'].value.trim();
     const baseVal = this.settingsForm.elements['apiBase'].value.trim();
     const promptVal = this.settingsForm.elements['systemPrompt'].value.trim();
 
+    let apiModel = this.settingModelSelect.value;
+    if (apiModel === 'custom' || provider === 'custom') {
+      apiModel = this.settingCustomModel.value.trim();
+      if (!apiModel) {
+        alert('請輸入自定義模型標示！');
+        this.settingCustomModel.focus();
+        return;
+      }
+    }
+
+    Store.state.openaiConfig.provider = provider;
     Store.state.openaiConfig.apiKey = keyVal;
-    Store.state.openaiConfig.apiBase = baseVal || 'https://api.openai.com/v1';
+    Store.state.openaiConfig.apiBase = baseVal || (provider === 'openrouter' ? 'https://openrouter.ai/api/v1' : 'https://api.openai.com/v1');
+    Store.state.openaiConfig.apiModel = apiModel;
     Store.state.openaiConfig.systemPrompt = promptVal;
     Store.save();
     
     this.closeSettings();
-    alert('OpenAI 設定儲存成功！');
+    alert('AI 智慧排程設定儲存成功！');
   },
 
   /**
@@ -92,7 +210,7 @@ export const AIController = {
   async startAIScheduling() {
     const apiKey = Store.state.openaiConfig.apiKey;
     if (!apiKey) {
-      alert('請先點選右上角 ⚙️ 設定按鈕，輸入您的 OpenAI API Key 才能開啟 AI 智慧排程功能！');
+      alert('請先點選右上角 ⚙️ 設定按鈕，輸入您的 API 金鑰 (API Key) 才能開啟 AI 智慧排程功能！');
       this.openSettings();
       return;
     }
@@ -144,7 +262,8 @@ export const AIController = {
         todayDate: `${curDate.getFullYear()}-${String(curDate.getMonth()+1).padStart(2,'0')}-${String(curDate.getDate()).padStart(2,'0')} (${dayNames[curDate.getDay()]})`,
         weekRange: `${startISO}T00:00 至 ${endISO}T23:59`,
         occupiedSlots: occupiedSlots,
-        pendingTasks: pendingTasks
+        pendingTasks: pendingTasks,
+        todayNews: this.todayNews.map(n => n.title) // Supply live Taiwan news context to AI
       };
 
       // 4. Trigger HTTP call to OpenAI Chat Completion API
@@ -159,16 +278,17 @@ export const AIController = {
 2. 留白與緩衝：任何排程任務前後必須與「已有行程 (occupiedSlots)」至少保留 15-30 分鐘的緩衝時間。
 3. 避免過載：每天安排的 AI 彈性任務總時數不得超過 5 小時，單次任務不連續超過 2.5 小時，防止大腦疲勞導致再次拖延。
 4. 時間合理性：絕對不要在深夜（22:00 - 08:00）或一般用餐時間（12:00-13:30, 18:00-19:30）排入任何工作任務。
+5. 時事感應與大腦調節：大腦受到當前外界環境與今日焦點時事的深遠影響。請參照傳入的 "todayNews" (最新頭條新聞與環境時事)，貼心地將它們融入到您的時間決策或心理建議中。例如：若新聞提及天氣大雨或科技大事，可在排程理由中幽默提及「雖然今天有某某新聞分心，但我們還是要專注...」或「既然今天發生了這件大事，已為您預留充電時間...」，給予使用者更深刻的溫暖與現實世界連結感！
 
 你必須回傳一個嚴格的 JSON 物件，格式如下，不要寫額外的說明文字：
 {
   "scheduledEvents": [
     {
-      "title": "🤖 [原任務名稱]",
+      "title": "原任務名稱",
       "startDate": "YYYY-MM-DDTHH:mm",
       "endDate": "YYYY-MM-DDTHH:mm",
       "color": "[傳入的顏色]",
-      "description": "AI 建議理由：[請寫一句溫暖、具鼓勵性且解釋為何安排在此時段的心理學說明，字數 30 字內]"
+      "description": "AI 建議理由：[請寫一句融合今日時事、溫暖、具鼓勵性且解釋為何安排在此時段的心理學說明，字數 35 字內]"
     }
   ]
 }
@@ -178,14 +298,18 @@ export const AIController = {
         ? Store.state.openaiConfig.systemPrompt.trim()
         : defaultSystemPrompt;
 
+      const activeModel = Store.state.openaiConfig.apiModel || 'gpt-3.5-turbo';
+
       const response = await fetch(apiURL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
+          'Authorization': `Bearer ${apiKey}`,
+          'HTTP-Referer': window.location.origin || 'https://github.com/RyderWu001/Time-Schedule',
+          'X-Title': 'Time Schedule Procrastination-Killer'
         },
         body: JSON.stringify({
-          model: 'gpt-3.5-turbo', // High speed and cost efficient
+          model: activeModel,
           response_format: { type: "json_object" },
           messages: [
             { role: 'system', content: systemPrompt },
@@ -351,5 +475,64 @@ export const AIController = {
       };
       requestAnimationFrame(step);
     }
+  },
+
+  /**
+   * Fetch Taiwan focus news from a public keyless RSS-to-JSON API
+   */
+  async fetchTodayNews() {
+    if (!this.newsBriefingList) return;
+    
+    try {
+      // Use LTN Focus RSS Feed via public free converter api.rss2json.com
+      const res = await fetch('https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fnews.ltn.com.tw%2Frss%2Ffocus.xml');
+      if (!res.ok) throw new Error('新聞頭條獲取失敗');
+      const data = await res.json();
+      
+      if (data && data.items && data.items.length > 0) {
+        // Retrieve top 5 focus news
+        this.todayNews = data.items.slice(0, 5).map(item => ({
+          title: item.title,
+          link: item.link
+        }));
+      } else {
+        throw new Error('RSS 回傳為空');
+      }
+    } catch (e) {
+      console.warn('Failed to fetch Taiwan focus news feed, loading curated psychological briefing.', e);
+      // Taiwan high-grade anti-procrastination dynamic items fallback
+      this.todayNews = [
+        { title: "【時事感應】今日天氣舒適宜人，適合上午安排高專注力的認知學習，下午安排適度伸展運動。", link: "#" },
+        { title: "【科技頭條】全球 AI 技術與多模態模型進展迅猛，此時最適合在晚上為自己保留 1.5 小時充電數位技能。", link: "#" },
+        { title: "【行為科學】研究指出早晨適度接受光照 15 分鐘能重啟生理時鐘，強烈建議高難度任務優先安排於午前。", link: "#" },
+        { title: "【抗拖提示】「兩分鐘定律」盛行：任何事若可在兩分鐘內完成，請立刻著手，別讓詳細規劃成為逃避藉口。", link: "#" }
+      ];
+    }
+    
+    this.renderNewsBriefing();
+  },
+
+  /**
+   * Render news cards in the sidebar briefing container
+   */
+  renderNewsBriefing() {
+    if (!this.newsBriefingList) return;
+    this.newsBriefingList.innerHTML = '';
+    
+    if (this.todayNews.length === 0) {
+      this.newsBriefingList.innerHTML = '<div class="upcoming-empty" style="padding: 12px 0;">無法獲取今日時事簡報</div>';
+      return;
+    }
+    
+    this.todayNews.forEach(news => {
+      const a = document.createElement('a');
+      a.className = 'news-item';
+      a.href = news.link;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.title = news.title;
+      a.textContent = news.title;
+      this.newsBriefingList.appendChild(a);
+    });
   }
 };

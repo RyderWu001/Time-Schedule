@@ -995,3 +995,29 @@ body.force-mobile-active .app-container {
   border-color: var(--text-primary) !important;
 }
 
+/* News Briefing Item Styling */
+.news-item {
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid var(--border-color);
+  font-size: 12px;
+  color: var(--text-primary);
+  text-decoration: none;
+  line-height: 1.4;
+  transition: all var(--transition-fast);
+  display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+  .news-item {
+    background: rgba(0, 0, 0, 0.1);
+  }
+}
+
+.news-item:hover {
+  background: var(--bg-panel-hover);
+  transform: translateX(1px);
+  border-color: var(--color-blue);
+}
+
