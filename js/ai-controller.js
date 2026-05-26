@@ -294,9 +294,14 @@ export const AIController = {
 }
 `;
 
-      const systemPrompt = Store.state.openaiConfig.systemPrompt && Store.state.openaiConfig.systemPrompt.trim()
+      let systemPrompt = Store.state.openaiConfig.systemPrompt && Store.state.openaiConfig.systemPrompt.trim()
         ? Store.state.openaiConfig.systemPrompt.trim()
         : defaultSystemPrompt;
+
+      // Ensure the system prompt contains the word "json" to satisfy OpenAI / OpenRouter API JSON Mode requirements
+      if (!/json/i.test(systemPrompt)) {
+        systemPrompt += "\n\n(Important: The output must be a valid JSON object in the requested schema.)";
+      }
 
       const activeModel = Store.state.openaiConfig.apiModel || 'gpt-3.5-turbo';
 
