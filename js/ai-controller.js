@@ -104,15 +104,15 @@ export const AIController = {
     this.settingModelSelect.addEventListener('change', () => this.handleModelSelectChange());
   },
 
-  handleProviderChange(preselectedModel = null) {
+  handleProviderChange(preselectedModel = null, keepCurrentBase = false) {
     const provider = this.settingProvider.value;
     const preset = this.presets[provider];
     
     if (preset) {
-      // 1. Prefill default base URL if empty or matching standard defaults
+      // 1. Prefill default base URL only if not told to keep it, or if it is empty
       const currentBase = this.settingsForm.elements['apiBase'].value.trim();
       const allBases = Object.values(this.presets).map(p => p.defaultBase);
-      if (!currentBase || allBases.includes(currentBase) || provider !== 'custom') {
+      if (!keepCurrentBase && (!currentBase || allBases.includes(currentBase) || provider !== 'custom')) {
         this.settingsForm.elements['apiBase'].value = preset.defaultBase;
       }
       
@@ -168,7 +168,7 @@ export const AIController = {
     this.settingsForm.elements['apiKey'].value = config.apiKey || '';
     this.settingsForm.elements['apiBase'].value = config.apiBase || 'https://api.openai.com/v1';
     
-    this.handleProviderChange(apiModel);
+    this.handleProviderChange(apiModel, true);
     
     this.settingsForm.elements['systemPrompt'].value = config.systemPrompt || '';
   },
@@ -297,6 +297,28 @@ export const AIController = {
       let systemPrompt = Store.state.openaiConfig.systemPrompt && Store.state.openaiConfig.systemPrompt.trim()
         ? Store.state.openaiConfig.systemPrompt.trim()
         : defaultSystemPrompt;
+
+      // 如果使用者有自訂 Prompt，但缺少系統必要的日程 JSON 格式標示 (scheduledEvents)，
+      // 則自動追加 JSON 格式指引，確保 AI 回傳格式正確，並能完美遵循使用者的自訂語氣/角色！
+      const jsonFormatInstruction = `
+
+[格式規範指引]
+你必須回傳一個嚴格的 JSON 物件，格式如下，不要寫額外的說明文字或 Markdown 包裝：
+{
+  "scheduledEvents": [
+    {
+      "title": "原任務名稱",
+      "startDate": "YYYY-MM-DDTHH:mm",
+      "endDate": "YYYY-MM-DDTHH:mm",
+      "color": "[傳入的顏色]",
+      "description": "AI 建議理由：[請融合今天的新聞焦點時事與心理諮商排程理由，字數 35 字內]"
+    }
+  ]
+}
+`;
+      if (!systemPrompt.includes('scheduledEvents')) {
+        systemPrompt += jsonFormatInstruction;
+      }
 
       // Ensure the system prompt contains the word "json" to satisfy OpenAI / OpenRouter API JSON Mode requirements
       if (!/json/i.test(systemPrompt)) {
