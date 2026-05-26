@@ -330,9 +330,21 @@ export const AIController = {
       }
 
       const resJson = await response.json();
-      const parsedContent = JSON.parse(resJson.choices[0].message.content);
+      const rawContent = resJson.choices && resJson.choices[0] && resJson.choices[0].message && resJson.choices[0].message.content;
+      
+      if (!rawContent) {
+        throw new Error('API 沒有回傳任何內容');
+      }
 
-      if (parsedContent && Array.isArray(parsedContent.scheduledEvents)) {
+      let parsedContent = null;
+      try {
+        parsedContent = this.normalizeAIResponse(rawContent);
+      } catch (parseErr) {
+        console.error('AI Response Parsing failed', parseErr);
+        throw new Error(`JSON 解析失敗: ${parseErr.message}\n原始回傳內容: ${rawContent.substring(0, 100)}...`);
+      }
+
+      if (parsedContent && Array.isArray(parsedContent.scheduledEvents) && parsedContent.scheduledEvents.length > 0) {
         // 5. Success! Populate proposed events
         const proposed = parsedContent.scheduledEvents.map((evt, idx) => ({
           id: `ai-draft-${Date.now()}-${idx}`,
@@ -347,13 +359,93 @@ export const AIController = {
         this.showLoader(false);
         this.displayAIPreview(proposed);
       } else {
-        throw new Error('AI 回傳的格式不正確，未能解析日程。');
+        throw new Error('AI 回傳的格式不正確，或未能解析出任何有效的日程事件。');
       }
 
     } catch (err) {
       this.showLoader(false);
       alert(`AI 智慧排程失敗：\n${err.message}\n\n請檢查 API Key、網路連接或 API Base 代理設置！`);
     }
+  },
+
+  /**
+   * Robust JSON parse and normalizer to handle varied LLM response formats (markdown wraps, snake case, alternate names)
+   */
+  normalizeAIResponse(rawText) {
+    if (typeof rawText !== 'string') return null;
+    
+    let cleanText = rawText.trim();
+    
+    // 1. 去除 Markdown 的 ```json ... ``` 或 ``` ... ``` 標記
+    if (cleanText.startsWith('```')) {
+      cleanText = cleanText.replace(/^```[a-zA-Z0-9]*\s*/, '');
+      cleanText = cleanText.replace(/\s*```$/, '');
+      cleanText = cleanText.trim();
+    }
+    
+    let parsed = null;
+    try {
+      parsed = JSON.parse(cleanText);
+    } catch (e) {
+      // 嘗試透過正則匹配擷取第一個 JSON 對象或陣列，防止前後夾雜聊天文字
+      const jsonMatch = cleanText.match(/\{[\s\S]*\}/) || cleanText.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        try {
+          parsed = JSON.parse(jsonMatch[0]);
+        } catch (innerErr) {
+          console.error('Failed to parse extracted JSON block', innerErr);
+          throw e; // 拋出原始錯誤
+        }
+      } else {
+        throw e;
+      }
+    }
+    
+    if (!parsed) return null;
+    
+    // 2. 正規化陣列格式，相容直接回傳陣列或包裹於特定 Key 下
+    let eventsArray = null;
+    if (Array.isArray(parsed)) {
+      eventsArray = parsed;
+    } else if (typeof parsed === 'object') {
+      const keys = ['scheduledEvents', 'scheduled_events', 'events', 'tasks', 'scheduled', 'list'];
+      for (const key of keys) {
+        if (Array.isArray(parsed[key])) {
+          eventsArray = parsed[key];
+          break;
+        }
+      }
+      
+      // 如果還未找到，查找所有對象值中任意一個陣列
+      if (!eventsArray) {
+        for (const val of Object.values(parsed)) {
+          if (Array.isArray(val)) {
+            eventsArray = val;
+            break;
+          }
+        }
+      }
+    }
+    
+    if (!eventsArray) return null;
+    
+    // 3. 正規化各項行程的欄位名稱與格式，確保符合系統預期
+    const normalizedEvents = eventsArray.map(evt => {
+      if (!evt || typeof evt !== 'object') return null;
+      
+      const startDate = evt.startDate || evt.start || evt.startTime || '';
+      const endDate = evt.endDate || evt.end || evt.endTime || '';
+      
+      return {
+        title: evt.title || evt.taskName || evt.name || '未命名任務',
+        startDate: typeof startDate === 'string' ? startDate.trim().replace(' ', 'T') : '',
+        endDate: typeof endDate === 'string' ? endDate.trim().replace(' ', 'T') : '',
+        color: evt.color || 'blue',
+        description: evt.description || evt.reason || evt.summary || 'AI 智慧防拖延排程。'
+      };
+    }).filter(evt => evt && evt.title && evt.startDate && evt.endDate);
+    
+    return { scheduledEvents: normalizedEvents };
   },
 
   /**
