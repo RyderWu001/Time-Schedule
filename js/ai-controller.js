@@ -57,15 +57,15 @@ export const AIController = {
     this.loadingOverlay = document.getElementById('ai-loading-overlay');
     this.loaderText = document.getElementById('ai-loader-text');
     this.aiActionBar = document.getElementById('ai-action-bar');
-    
+
     this.btnConfirmAI = document.getElementById('btn-confirm-ai');
     this.btnCancelAI = document.getElementById('btn-cancel-ai');
-    
+
     // Key Settings Modal
     this.btnSettings = document.getElementById('btn-settings');
     this.settingsModal = document.getElementById('settings-modal');
     this.settingsForm = document.getElementById('settings-form');
-    
+
     // Provider & Model elements
     this.settingProvider = document.getElementById('setting-provider');
     this.settingModelSelect = document.getElementById('setting-model-select');
@@ -86,7 +86,7 @@ export const AIController = {
 
     // 3. Settings modal trigger
     this.btnSettings.addEventListener('click', () => this.openSettings());
-    
+
     // 4. Settings modal close buttons
     const closeBtns = this.settingsModal.querySelectorAll('.btn-close, .btn-cancel');
     closeBtns.forEach(btn => {
@@ -107,7 +107,7 @@ export const AIController = {
   handleProviderChange(preselectedModel = null, keepCurrentBase = false) {
     const provider = this.settingProvider.value;
     const preset = this.presets[provider];
-    
+
     if (preset) {
       // 1. Prefill default base URL only if not told to keep it, or if it is empty
       const currentBase = this.settingsForm.elements['apiBase'].value.trim();
@@ -115,7 +115,7 @@ export const AIController = {
       if (!keepCurrentBase && (!currentBase || allBases.includes(currentBase) || provider !== 'custom')) {
         this.settingsForm.elements['apiBase'].value = preset.defaultBase;
       }
-      
+
       // 2. Populate models dropdown
       this.settingModelSelect.innerHTML = '';
       preset.models.forEach(model => {
@@ -124,7 +124,7 @@ export const AIController = {
         opt.textContent = model.text;
         this.settingModelSelect.appendChild(opt);
       });
-      
+
       // 3. Set selected model
       if (preselectedModel) {
         const hasModel = preset.models.some(m => m.value === preselectedModel);
@@ -138,7 +138,7 @@ export const AIController = {
         this.settingModelSelect.value = preset.models[0].value;
       }
     }
-    
+
     this.handleModelSelectChange();
   },
 
@@ -159,17 +159,17 @@ export const AIController = {
 
   openSettings() {
     this.settingsModal.classList.add('active');
-    
+
     const config = Store.state.openaiConfig;
     const provider = config.provider || 'openai';
     const apiModel = config.apiModel || 'gpt-3.5-turbo';
-    
+
     this.settingProvider.value = provider;
     this.settingsForm.elements['apiKey'].value = config.apiKey || '';
     this.settingsForm.elements['apiBase'].value = config.apiBase || 'https://api.openai.com/v1';
-    
+
     this.handleProviderChange(apiModel, true);
-    
+
     this.settingsForm.elements['systemPrompt'].value = config.systemPrompt || '';
   },
 
@@ -199,7 +199,7 @@ export const AIController = {
     Store.state.openaiConfig.apiModel = apiModel;
     Store.state.openaiConfig.systemPrompt = promptVal;
     Store.save();
-    
+
     this.closeSettings();
     alert('AI 智慧排程設定儲存成功！');
   },
@@ -259,7 +259,7 @@ export const AIController = {
 
       // 3. Formulate Prompt context
       const userPromptContext = {
-        todayDate: `${curDate.getFullYear()}-${String(curDate.getMonth()+1).padStart(2,'0')}-${String(curDate.getDate()).padStart(2,'0')} (${dayNames[curDate.getDay()]})`,
+        todayDate: `${curDate.getFullYear()}-${String(curDate.getMonth() + 1).padStart(2, '0')}-${String(curDate.getDate()).padStart(2, '0')} (${dayNames[curDate.getDay()]})`,
         weekRange: `${startISO}T00:00 至 ${endISO}T23:59`,
         occupiedSlots: occupiedSlots,
         pendingTasks: pendingTasks,
@@ -268,27 +268,27 @@ export const AIController = {
 
       // 4. Trigger HTTP call to OpenAI Chat Completion API
       const apiURL = `${Store.state.openaiConfig.apiBase}/chat/completions`;
-      
+
       const defaultSystemPrompt = `
 你是一位專門幫助「重度拖延症患者」克服規劃癱瘓的時間管理教練。
-你的目標是幫使用者將「非固定時間的彈性任務」合理、精準地安插到「本週的空閒時段」中，強迫他們 block 時間專注執行。
+你的目標是幫使用者將「彈性任務」合理地安插到本週的「空閒時段」中。
 
-請遵循以下排程心理學原則：
-1. 認知負荷分配：高專注力任務（如讀書、寫程式、研讀、寫報告）優先安排在早晨至中午（09:00 - 12:00）；體能/動態任務（如運動、清潔、外出）安排在下午（14:00 - 18:00）；輕量/休閒任務安排在傍晚或晚上。
-2. 留白與緩衝：任何排程任務前後必須與「已有行程 (occupiedSlots)」至少保留 15-30 分鐘的緩衝時間。
-3. 避免過載：每天安排的 AI 彈性任務總時數不得超過 5 小時，單次任務不連續超過 2.5 小時，防止大腦疲勞導致再次拖延。
-4. 時間合理性：絕對不要在深夜（22:00 - 08:00）或一般用餐時間（12:00-13:30, 18:00-19:30）排入任何工作任務。
-5. 時事感應與大腦調節：大腦受到當前外界環境與今日焦點時事的深遠影響。請參照傳入的 "todayNews" (最新頭條新聞與環境時事)，貼心地將它們融入到您的時間決策或心理建議中。例如：若新聞提及天氣大雨或科技大事，可在排程理由中幽默提及「雖然今天有某某新聞分心，但我們還是要專注...」或「既然今天發生了這件大事，已為您預留充電時間...」，給予使用者更深刻的溫暖與現實世界連結感！
+請以【把所有任務都排進去】為最高原則，並彈性遵守以下條件：
+1. 彈性排程：高專注任務優先排早晨，動態排下午。若偏好的時段已滿，請無條件排入「任何其他空閒時間」！完成比完美更重要。
+2. 放寬緩衝：盡量與「已有行程」保留 10 分鐘緩衝即可；若空檔真的極窄，允許「無緩衝」緊湊排程。
+3. 自動拆分長任務（非常重要！）：若傳入的任務時數大於 2 小時，你必須將它拆分為兩筆或多筆獨立行程（例如標題加上 " (Part 1)" 與 " (Part 2)"），並安插到不同的空檔中。
+4. 避開深夜：盡量不要排在 23:00 - 08:00。
+5. 融入時事：參考傳入的 todayNews，在 description 中給予結合時事的溫暖鼓勵。
 
-你必須回傳一個嚴格的 JSON 物件，格式如下，不要寫額外的說明文字：
+你必須回傳一個嚴格的 JSON 物件，格式如下，絕對不要在 JSON 以外輸出任何道歉、解釋或 Markdown 標記：
 {
   "scheduledEvents": [
     {
-      "title": "原任務名稱",
+      "title": "任務名稱",
       "startDate": "YYYY-MM-DDTHH:mm",
       "endDate": "YYYY-MM-DDTHH:mm",
       "color": "[傳入的顏色]",
-      "description": "AI 建議理由：[請寫一句融合今日時事、溫暖、具鼓勵性且解釋為何安排在此時段的心理學說明，字數 35 字內]"
+      "description": "AI 建議理由：[融合今日新聞或心理學的簡短鼓勵，35 字內]"
     }
   ]
 }
@@ -353,7 +353,7 @@ export const AIController = {
 
       const resJson = await response.json();
       const rawContent = resJson.choices && resJson.choices[0] && resJson.choices[0].message && resJson.choices[0].message.content;
-      
+
       if (!rawContent) {
         throw new Error('API 沒有回傳任何內容');
       }
@@ -395,16 +395,16 @@ export const AIController = {
    */
   normalizeAIResponse(rawText) {
     if (typeof rawText !== 'string') return null;
-    
+
     let cleanText = rawText.trim();
-    
+
     // 1. 去除 Markdown 的 ```json ... ``` 或 ``` ... ``` 標記
     if (cleanText.startsWith('```')) {
       cleanText = cleanText.replace(/^```[a-zA-Z0-9]*\s*/, '');
       cleanText = cleanText.replace(/\s*```$/, '');
       cleanText = cleanText.trim();
     }
-    
+
     let parsed = null;
     try {
       parsed = JSON.parse(cleanText);
@@ -422,9 +422,9 @@ export const AIController = {
         throw e;
       }
     }
-    
+
     if (!parsed) return null;
-    
+
     // 2. 正規化陣列格式，相容直接回傳陣列或包裹於特定 Key 下
     let eventsArray = null;
     if (Array.isArray(parsed)) {
@@ -437,7 +437,7 @@ export const AIController = {
           break;
         }
       }
-      
+
       // 如果還未找到，查找所有對象值中任意一個陣列
       if (!eventsArray) {
         for (const val of Object.values(parsed)) {
@@ -448,16 +448,16 @@ export const AIController = {
         }
       }
     }
-    
+
     if (!eventsArray) return null;
-    
+
     // 3. 正規化各項行程的欄位名稱與格式，確保符合系統預期
     const normalizedEvents = eventsArray.map(evt => {
       if (!evt || typeof evt !== 'object') return null;
-      
+
       const startDate = evt.startDate || evt.start || evt.startTime || '';
       const endDate = evt.endDate || evt.end || evt.endTime || '';
-      
+
       return {
         title: evt.title || evt.taskName || evt.name || '未命名任務',
         startDate: typeof startDate === 'string' ? startDate.trim().replace(' ', 'T') : '',
@@ -466,7 +466,7 @@ export const AIController = {
         description: evt.description || evt.reason || evt.summary || 'AI 智慧防拖延排程。'
       };
     }).filter(evt => evt && evt.title && evt.startDate && evt.endDate);
-    
+
     return { scheduledEvents: normalizedEvents };
   },
 
@@ -478,7 +478,7 @@ export const AIController = {
       this.loadingOverlay.classList.add('active');
       let index = 0;
       this.loaderText.textContent = this.motivationalTips[0];
-      
+
       this.tipInterval = setInterval(() => {
         index = (index + 1) % this.motivationalTips.length;
         // Smoothly update quote text
@@ -500,10 +500,10 @@ export const AIController = {
   displayAIPreview(proposedEvents) {
     Store.state.aiPreview.isProposed = true;
     Store.state.aiPreview.proposedEvents = proposedEvents;
-    
+
     // Slide down the top action bar
     this.aiActionBar.classList.add('active');
-    
+
     this.app.render(); // Re-render views showing drafts
   },
 
@@ -529,7 +529,7 @@ export const AIController = {
 
     // 3. Dismiss preview state
     this.clearAIPreview();
-    
+
     // 4. Rerender Sidebar Task pool list
     this.app.renderPendingTasksList();
 
@@ -544,7 +544,7 @@ export const AIController = {
   clearAIPreview() {
     Store.state.aiPreview.isProposed = false;
     Store.state.aiPreview.proposedEvents = [];
-    
+
     this.aiActionBar.classList.remove('active');
     this.app.render(); // Re-render returning to normal
   },
@@ -556,7 +556,7 @@ export const AIController = {
     // Simple pure CSS/JS Confetti particle burst
     const container = document.body;
     const colors = ['#3b82f6', '#10b981', '#f43f5e', '#f59e0b', '#8b5cf6'];
-    
+
     for (let i = 0; i < 100; i++) {
       const p = document.createElement('div');
       p.style.position = 'fixed';
@@ -567,17 +567,17 @@ export const AIController = {
       p.style.zIndex = '9999';
       p.style.left = '50vw';
       p.style.top = '40vh';
-      
+
       const angle = Math.random() * Math.PI * 2;
       const speed = Math.random() * 15 + 5;
       let vx = Math.cos(angle) * speed;
       let vy = Math.sin(angle) * speed - 5;
-      
+
       let px = 50;
       let py = 40;
-      
+
       container.appendChild(p);
-      
+
       let age = 0;
       const step = () => {
         px += vx * 0.1;
@@ -601,13 +601,13 @@ export const AIController = {
    */
   async fetchTodayNews() {
     if (!this.newsBriefingList) return;
-    
+
     try {
       // Use LTN Focus RSS Feed via public free converter api.rss2json.com
       const res = await fetch('https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fnews.ltn.com.tw%2Frss%2Ffocus.xml');
       if (!res.ok) throw new Error('新聞頭條獲取失敗');
       const data = await res.json();
-      
+
       if (data && data.items && data.items.length > 0) {
         // Retrieve top 5 focus news
         this.todayNews = data.items.slice(0, 5).map(item => ({
@@ -627,7 +627,7 @@ export const AIController = {
         { title: "【抗拖提示】「兩分鐘定律」盛行：任何事若可在兩分鐘內完成，請立刻著手，別讓詳細規劃成為逃避藉口。", link: "#" }
       ];
     }
-    
+
     this.renderNewsBriefing();
   },
 
@@ -637,12 +637,12 @@ export const AIController = {
   renderNewsBriefing() {
     if (!this.newsBriefingList) return;
     this.newsBriefingList.innerHTML = '';
-    
+
     if (this.todayNews.length === 0) {
       this.newsBriefingList.innerHTML = '<div class="upcoming-empty" style="padding: 12px 0;">無法獲取今日時事簡報</div>';
       return;
     }
-    
+
     this.todayNews.forEach(news => {
       const a = document.createElement('a');
       a.className = 'news-item';
